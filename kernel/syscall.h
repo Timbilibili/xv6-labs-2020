@@ -1,3 +1,10 @@
+/*
+ * @Author: lxk liuxikun4896674@163.com
+ * @Date: 2025-04-08 15:59:54
+ * @LastEditors: lxk liuxikun4896674@163.com
+ * @LastEditTime: 2025-05-08 15:49:41
+ * @FilePath: /xv6-labs-2020/kernel/syscall.h
+ */
 // System call numbers
 #define SYS_fork    1
 #define SYS_exit    2
@@ -20,3 +27,6 @@
 #define SYS_link   19
 #define SYS_mkdir  20
 #define SYS_close  21
+#define SYS_trace  22
+#define SYS_sysinfo 23
+

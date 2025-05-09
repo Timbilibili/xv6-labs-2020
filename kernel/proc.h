@@ -56,14 +56,14 @@ struct trapframe {
   /*  88 */ uint64 t2;
   /*  96 */ uint64 s0;
   /* 104 */ uint64 s1;
-  /* 112 */ uint64 a0;
+  /* 112 */ uint64 a0;            //存放exec需要的参数 or 系统调用syscall的返回值：返回负数表示错误，零或正数表示成功
   /* 120 */ uint64 a1;
   /* 128 */ uint64 a2;
   /* 136 */ uint64 a3;
   /* 144 */ uint64 a4;
   /* 152 */ uint64 a5;
   /* 160 */ uint64 a6;
-  /* 168 */ uint64 a7;
+  /* 168 */ uint64 a7;            //寄存器a7存放系统调用号
   /* 176 */ uint64 s2;
   /* 184 */ uint64 s3;
   /* 192 */ uint64 s4;
@@ -103,4 +103,5 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+  int traceMask;               // 追踪的掩码，保存trace系统调用参数,例如SYS_read()对应的掩码：32
 };

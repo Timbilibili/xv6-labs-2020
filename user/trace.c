@@ -1,3 +1,10 @@
+/*
+ * @Author: lxk liuxikun4896674@163.com
+ * @Date: 2025-04-15 17:06:28
+ * @LastEditors: lxk liuxikun4896674@163.com
+ * @LastEditTime: 2025-05-07 16:21:01
+ * @FilePath: /xv6-labs-2020/user/trace.c
+ */
 #include "kernel/param.h"
 #include "kernel/types.h"
 #include "kernel/stat.h"

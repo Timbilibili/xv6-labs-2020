@@ -1,5 +1,15 @@
+/*
+ * @Author: lxk liuxikun4896674@163.com
+ * @Date: 2025-04-08 15:59:54
+ * @LastEditors: lxk liuxikun4896674@163.com
+ * @LastEditTime: 2025-05-09 10:42:39
+ * @FilePath: /xv6-labs-2020/user/user.h
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ */
+
 struct stat;
 struct rtcdate;
+struct sysinfo;
 
 // system calls
 int fork(void);
@@ -23,6 +33,10 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int trace(int);
+int sysinfo(struct sysinfo *);
+
+
 
 // ulib.c
 int stat(const char*, struct stat*);

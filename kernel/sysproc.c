@@ -6,6 +6,7 @@
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
+#include "sysinfo.h"
 
 uint64
 sys_exit(void)
@@ -94,4 +95,34 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+uint64
+sys_trace(void)
+{
+  // 从寄存器a0获取系统调用的形参，放入proc结构体中的traceMask掩码
+  argint(0, &(myproc()->traceMask)); //0：寄存器a0
+  return 0;
+}
+
+uint64
+sys_sysinfo()
+{
+  uint64 addrbuf; // 缓冲区，接受来自寄存器a0的参数信息，寄存器a0保存用户空间下的参数：一个指向struct sysinfo的指针(来自用户空间) 
+  if(argaddr(0, &addrbuf)<0)
+  {
+    printf("argaddr failed to get arg from trapframe->a0\n");
+    return -1;
+  }
+  struct sysinfo sinfo;
+  sinfo.freemem = getRestMem();
+  sinfo.nproc = getProcNum();
+  
+  /* sysinfo需要将一个struct sysinfo复制回用户空间 */
+  
+  // 使用 copyout，结合当前进程的页表，获得进程传进来的指针（逻辑地址）对应的物理地址
+  // 然后将 &sinfo 中的数据复制到该指针所指位置，供用户进程使用
+  if(copyout(myproc()->pagetable, addrbuf, (char *)&sinfo, sizeof(sinfo)) < 0)
+    return -1;
+  return 0;
 }

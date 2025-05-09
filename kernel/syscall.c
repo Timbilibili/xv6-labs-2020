@@ -61,6 +61,7 @@ argint(int n, int *ip)
   return 0;
 }
 
+// 接受地址类型参数，也就是来自用户空间下的指针参数，通过trapframe的寄存器a0
 // Retrieve an argument as a pointer.
 // Doesn't check for legality, since
 // copyin/copyout will do that.
@@ -104,43 +105,87 @@ extern uint64 sys_unlink(void);
 extern uint64 sys_wait(void);
 extern uint64 sys_write(void);
 extern uint64 sys_uptime(void);
+extern uint64 sys_trace(void);
+extern uint64 sys_sysinfo(void);
+
 
 static uint64 (*syscalls[])(void) = {
-[SYS_fork]    sys_fork,
-[SYS_exit]    sys_exit,
-[SYS_wait]    sys_wait,
-[SYS_pipe]    sys_pipe,
-[SYS_read]    sys_read,
-[SYS_kill]    sys_kill,
-[SYS_exec]    sys_exec,
-[SYS_fstat]   sys_fstat,
-[SYS_chdir]   sys_chdir,
-[SYS_dup]     sys_dup,
-[SYS_getpid]  sys_getpid,
-[SYS_sbrk]    sys_sbrk,
-[SYS_sleep]   sys_sleep,
-[SYS_uptime]  sys_uptime,
-[SYS_open]    sys_open,
-[SYS_write]   sys_write,
-[SYS_mknod]   sys_mknod,
-[SYS_unlink]  sys_unlink,
-[SYS_link]    sys_link,
-[SYS_mkdir]   sys_mkdir,
-[SYS_close]   sys_close,
+[SYS_fork]          sys_fork,
+[SYS_exit]          sys_exit,
+[SYS_wait]          sys_wait,
+[SYS_pipe]          sys_pipe,
+[SYS_read]          sys_read,
+[SYS_kill]          sys_kill,
+[SYS_exec]          sys_exec,
+[SYS_fstat]         sys_fstat,
+[SYS_chdir]         sys_chdir,
+[SYS_dup]           sys_dup,
+[SYS_getpid]        sys_getpid,
+[SYS_sbrk]          sys_sbrk,
+[SYS_sleep]         sys_sleep,
+[SYS_uptime]        sys_uptime,
+[SYS_open]          sys_open,
+[SYS_write]         sys_write,
+[SYS_mknod]         sys_mknod,
+[SYS_unlink]        sys_unlink,
+[SYS_link]          sys_link,
+[SYS_mkdir]         sys_mkdir,
+[SYS_close]         sys_close,
+[SYS_trace]         sys_trace,
+[SYS_sysinfo]       sys_sysinfo,
+
+};
+
+/**
+ * @description: 给trace用的：用于printf输出时，SYS_call调用号对应的字符串名称，例如：输出SYS_read，调用号是5，在该数组中
+ *               对应5的调用名称字符串是"read"，printf 输出 "read"字符串名称
+ * @return {*}
+ */
+static char *syscalls_name[] = {
+[SYS_fork]    "fork",
+[SYS_exit]    "exit",
+[SYS_wait]    "wait",
+[SYS_pipe]    "pipe",
+[SYS_read]    "read",
+[SYS_kill]    "kill",
+[SYS_exec]    "exec",
+[SYS_fstat]   "fstat",
+[SYS_chdir]   "chdir",
+[SYS_dup]     "dup",
+[SYS_getpid]  "getpid",
+[SYS_sbrk]    "sbrk",
+[SYS_sleep]   "sleep",
+[SYS_uptime]  "uptime",
+[SYS_open]    "open",
+[SYS_write]   "write",
+[SYS_mknod]   "mknod",
+[SYS_unlink]  "unlink",
+[SYS_link]    "link",
+[SYS_mkdir]   "mkdir",
+[SYS_close]   "close",
+[SYS_trace]   "trace",
+[SYS_sysinfo] "sysinfo",
+
 };
 
 void
 syscall(void)
 {
-  int num;
-  struct proc *p = myproc();
+  int num; //存放系统调用号
+  struct proc *p = myproc();//p是结构体，里面是每个proc的信息，包括trapframe陷井帧信息
 
-  num = p->trapframe->a7;
+  num = p->trapframe->a7;  // 寄存器a7存放系统调用号，参见书中4.3节
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
-    p->trapframe->a0 = syscalls[num]();
+    p->trapframe->a0 = syscalls[num]();  // 执行系统调用，然后将系统调用返回值存入a0
+
+    // 系统调用是否匹配
+    if ((1 << num) & p->traceMask) //判断：系统调用号num == trace形参（掩码，例：trace 32的32）
+      printf("%d: syscall %s -> %d\n", p->pid, syscalls_name[num], p->trapframe->a0);
   } else {
     printf("%d %s: unknown sys call %d\n",
             p->pid, p->name, num);
     p->trapframe->a0 = -1;
   }
 }
+
+
