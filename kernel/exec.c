@@ -51,6 +51,8 @@ exec(char *path, char **argv)
     uint64 sz1;
     if((sz1 = uvmalloc(pagetable, sz, ph.vaddr + ph.memsz)) == 0)
       goto bad;
+    if (sz1 >= CLINT)
+      goto bad;
     sz = sz1;
     if(ph.vaddr % PGSIZE != 0)
       goto bad;
@@ -62,6 +64,7 @@ exec(char *path, char **argv)
   ip = 0;
 
   p = myproc();
+  // oldsz = p->sz
   uint64 oldsz = p->sz;
 
   // Allocate two pages at the next page boundary.
@@ -107,7 +110,12 @@ exec(char *path, char **argv)
     if(*s == '/')
       last = s+1;
   safestrcpy(p->name, last, sizeof(p->name));
-    
+
+  // 清除内核页表中对程序内存的旧映射(清空内核内存中0 ~ PGROUNDUP(oldsz) / PGSIZE范围的内存，提前腾出空间)，
+  // 然后重新建立映射。
+  uvmunmap(p->kernelpgtbl, 0, PGROUNDUP(oldsz) / PGSIZE, 0);
+  kvmcopymapping(pagetable, p->kernelpgtbl, 0, sz);
+  
   // Commit to the user image.
   oldpagetable = p->pagetable;
   p->pagetable = pagetable;
@@ -116,6 +124,7 @@ exec(char *path, char **argv)
   p->trapframe->sp = sp; // initial stack pointer
   proc_freepagetable(oldpagetable, oldsz);
 
+  vmprint(p->pagetable);
   return argc; // this ends up in a0, the first argument to main(argc, argv)
 
  bad:

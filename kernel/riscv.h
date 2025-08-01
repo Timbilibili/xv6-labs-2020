@@ -311,7 +311,7 @@ r_ra()
   return x;
 }
 
-// flush the TLB.
+// reflush the TLB.
 static inline void
 sfence_vma()
 {
@@ -324,6 +324,7 @@ sfence_vma()
 #define PGSHIFT 12  // bits of offset within a page
 
 #define PGROUNDUP(sz)  (((sz)+PGSIZE-1) & ~(PGSIZE-1))
+// 页对齐处理
 #define PGROUNDDOWN(a) (((a)) & ~(PGSIZE-1))
 
 #define PTE_V (1L << 0) // valid
@@ -335,8 +336,10 @@ sfence_vma()
 // shift a physical address to the right place for a PTE.
 #define PA2PTE(pa) ((((uint64)pa) >> 12) << 10)
 
+// PTE2PA 宏定义：将 PTE 的页内地址转为物理地址 PA 
 #define PTE2PA(pte) (((pte) >> 10) << 12)
 
+// 取PTE的Flags标志位
 #define PTE_FLAGS(pte) ((pte) & 0x3FF)
 
 // extract the three 9-bit page table indices from a virtual address.

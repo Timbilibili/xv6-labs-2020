@@ -80,6 +80,7 @@ struct trapframe {
   /* 280 */ uint64 t6;
 };
 
+// 枚举类型（enum）是一种基本数据类型，用于定义一组具有离散值的常量，默认从0开始递增
 enum procstate { UNUSED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 // Per-process state
@@ -98,9 +99,11 @@ struct proc {
   uint64 kstack;               // Virtual address of kernel stack
   uint64 sz;                   // Size of process memory (bytes)
   pagetable_t pagetable;       // User page table
+  pagetable_t kernelpgtbl;     // proc's Kernel own pgtbl 进程的内核独立页表
+  
   struct trapframe *trapframe; // data page for trampoline.S
   struct context context;      // swtch() here to run process
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
-  char name[16];               // Process name (debugging)
+  char name[16];               // Process name (debugging) 
 };

@@ -35,10 +35,12 @@ freerange(void *pa_start, void *pa_end)
 {
   char *p;
   p = (char*)PGROUNDUP((uint64)pa_start);
-  for(; p + PGSIZE <= (char*)pa_end; p += PGSIZE)
+  for(; p + PGSIZE <= (char*)pa_end; p += PGSIZE) // 每次都加4096字节，对齐，对齐后free（p指向的PTE）
     kfree(p);
 }
 
+// 释放物理内存页
+//
 // Free the page of physical memory pointed at by v,
 // which normally should have been returned by a
 // call to kalloc().  (The exception is when
@@ -61,7 +63,8 @@ kfree(void *pa)
   kmem.freelist = r;
   release(&kmem.lock);
 }
-
+// 创建一个4KB的物理内存页表
+//
 // Allocate one 4096-byte page of physical memory.
 // Returns a pointer that the kernel can use.
 // Returns 0 if the memory cannot be allocated.

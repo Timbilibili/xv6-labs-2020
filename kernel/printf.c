@@ -114,6 +114,7 @@ printf(char *fmt, ...)
     release(&pr.lock);
 }
 
+// "panic: xxx ": printf打印传入的形参字符串
 void
 panic(char *s)
 {
