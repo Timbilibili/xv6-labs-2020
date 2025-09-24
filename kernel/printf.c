@@ -132,3 +132,19 @@ printfinit(void)
   initlock(&pr.lock, "pr");
   pr.locking = 1;
 }
+
+// new fun() for backtrace
+void backtrace()
+{
+  uint64 fp = r_fp(); // read register(fp) -- the basic address of func stack
+  
+  // 当前内存页面 Page 上对齐(栈向下生长，因此高地址为栈顶)
+  // fp寄存器地址，当fp不是栈底部时，即：当前函数栈已经分配
+  while (fp != PGROUNDUP(fp)) 
+  {
+    uint64 ra = *(uint64*)(fp - 8); // 获得当前函数返回地址return address
+    printf("%p\n", ra); // 打印return address
+    fp = *(uint64*)(fp - 16); // 先前函数的函数栈基地址 previous fp，方便回溯
+  }
+  
+}

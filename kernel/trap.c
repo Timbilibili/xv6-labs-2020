@@ -33,6 +33,10 @@ trapinithart(void)
 // handle an interrupt, exception, or system call from user space.
 // called from trampoline.S
 //
+// 0.检查是否是来自用户空间的trap，不是的话触发panic
+// 1.重定向stvec至内核trap向量kernelvec的地址
+// 2.针对三种不同的trap原因：syscall、错误、中断，进行不同的处理
+// 3.usertrapret（）返回
 void
 usertrap(void)
 {
@@ -218,3 +222,20 @@ devintr()
   }
 }
 
+// trap.c
+int sigalarm(int ticks, void(*handler)()) {
+  // 设置 myproc 中的相关属性
+  struct proc *p = myproc();
+  p->alarm_interval = ticks;
+  p->alarm_handler = handler;
+  p->alarm_ticks = ticks;
+  return 0;
+}
+
+int sigreturn() {
+  // 将 trapframe 恢复到时钟中断之前的状态，恢复原本正在执行的程序流
+  struct proc *p = myproc();
+  *p->trapframe = *p->alarm_trapframe;
+  p->alarm_goingoff = 0;
+  return 0;
+}

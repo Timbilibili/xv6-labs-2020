@@ -132,12 +132,12 @@ static uint64 (*syscalls[])(void) = {
 void
 syscall(void)
 {
-  int num;
+  int num; // 系统调用号
   struct proc *p = myproc();
 
-  num = p->trapframe->a7;
+  num = p->trapframe->a7; // 从a7寄存器获得系统调用号
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
-    p->trapframe->a0 = syscalls[num]();
+    p->trapframe->a0 = syscalls[num](); // 根据调用号，使用对应号的函数
   } else {
     printf("%d %s: unknown sys call %d\n",
             p->pid, p->name, num);

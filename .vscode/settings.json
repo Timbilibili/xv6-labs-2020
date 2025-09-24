@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.ipyb": "python",
+        "defs.h": "c"
+    }
+}

@@ -40,7 +40,7 @@ w_mepc(uint64 x)
 
 // Supervisor Status Register, sstatus
 
-#define SSTATUS_SPP (1L << 8)  // Previous mode, 1=Supervisor, 0=User
+#define SSTATUS_SPP (1L << 8)  // Previous mode, 1=Supervisor, 0=User  1 表示来trap自内核，0表示来自用户
 #define SSTATUS_SPIE (1L << 5) // Supervisor Previous Interrupt Enable
 #define SSTATUS_UPIE (1L << 4) // User Previous Interrupt Enable
 #define SSTATUS_SIE (1L << 1)  // Supervisor Interrupt Enable
@@ -319,6 +319,14 @@ sfence_vma()
   asm volatile("sfence.vma zero, zero");
 }
 
+// riscv.h
+static inline uint64
+r_fp()
+{
+  uint64 x;
+  asm volatile("mv %0, s0" : "=r" (x));
+  return x;
+}
 
 #define PGSIZE 4096 // bytes per page
 #define PGSHIFT 12  // bits of offset within a page
