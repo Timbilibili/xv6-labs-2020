@@ -224,7 +224,7 @@ r_scause()
   return x;
 }
 
-// Supervisor Trap Value
+// Supervisor Trap Value 产生页面错误的虚拟地址
 static inline uint64
 r_stval()
 {

@@ -43,12 +43,16 @@ sys_sbrk(void)
 {
   int addr;
   int n;
+  struct proc *p = myproc();
 
-  if(argint(0, &n) < 0)
+  if(argint(0, &n) < 0) // a0寄存器内容传给n
     return -1;
   addr = myproc()->sz;
-  if(growproc(n) < 0)
-    return -1;
+  if (n < 0) // 当前扩展内存为负数，即删减内存时
+  {
+    uvmdealloc(p->pagetable, p->sz, p->sz + n);
+  }
+   p->sz += n; // 懒分配，不立即分配对应物理ram
   return addr;
 }
 

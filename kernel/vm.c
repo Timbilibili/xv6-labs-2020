@@ -181,9 +181,15 @@ uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free)
 
   for(a = va; a < va + npages*PGSIZE; a += PGSIZE){
     if((pte = walk(pagetable, a, 0)) == 0)
-      panic("uvmunmap: walk");
+    {  
+      printf("uvmunmap: pte缺失，触发page fault");
+      continue;
+    }
     if((*pte & PTE_V) == 0)
-      panic("uvmunmap: not mapped");
+    {
+      printf("uvmunmap: pte_v无效，触发page fault");
+      continue;
+    }  
     if(PTE_FLAGS(*pte) == PTE_V)
       panic("uvmunmap: not a leaf");
     if(do_free){
@@ -315,9 +321,9 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
 
   for(i = 0; i < sz; i += PGSIZE){
     if((pte = walk(old, i, 0)) == 0)
-      panic("uvmcopy: pte should exist");
+      continue; // 触发页面故障后，不panic终止运行，而是跳转至新增加的lazy allocation处理程序
     if((*pte & PTE_V) == 0)
-      panic("uvmcopy: page not present");
+      continue;
     pa = PTE2PA(*pte);
     flags = PTE_FLAGS(*pte);
     if((mem = kalloc()) == 0)
@@ -355,6 +361,11 @@ int
 copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
 {
   uint64 n, va0, pa0;
+  
+  // 如果copyout的输出逻辑地址dstva此时还没有懒分配，
+  // 则先懒分配一下，再往下处理
+  if(uvmshouldtouch(dstva))
+    uvmlazytouch(dstva);
 
   while(len > 0){
     va0 = PGROUNDDOWN(dstva);
@@ -380,6 +391,11 @@ int
 copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
 {
   uint64 n, va0, pa0;
+  
+  // 如果copyin的输入逻辑地址srcva此时还没有懒分配，
+  // 则先懒分配一下，再往下处理
+  if(uvmshouldtouch(srcva))
+    uvmlazytouch(srcva);
 
   while(len > 0){
     va0 = PGROUNDDOWN(srcva);
@@ -439,4 +455,35 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
   } else {
     return -1;
   }
+}
+// lazy allocate: 懒分配
+void uvmlazytouch(uint64 va)
+{
+  struct proc * p = (struct proc *)myproc();
+  char * mem = kalloc();
+  if(mem == 0)  // failed to allocate physical memory
+  {  
+    printf("uvmlazytouch: kalloc failed \n");
+    p->killed = 1;
+  }
+  else // allocated successfully
+  {
+    memset(mem, 0, PGSIZE);
+    if(mappages(p->pagetable, va, PGSIZE, (uint64)mem, PTE_W|PTE_X|PTE_R|PTE_U) !=0);
+    {
+      printf("uvmlazytouch: map pages failed \n");
+    }
+    kfree(mem);
+    p->killed = 1;
+  }
+}
+
+// 检测va是否是一个需要触发懒分配的地址
+int uvmshouldtouch(uint64 va)
+{
+  pte_t * pte;
+  struct proc* p = myproc();
+  return va < p->sz // within size of memory for the process
+    && PGROUNDDOWN(va) != r_sp() // not accessing stack guard page (it shouldn't be mapped)
+    && (((pte = walk(p->pagetable, va, 0))==0) || ((*pte & PTE_V)==0)); // page table entry does not exist
 }

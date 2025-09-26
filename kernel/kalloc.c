@@ -62,7 +62,7 @@ kfree(void *pa)
   release(&kmem.lock);
 }
 
-// Allocate one 4096-byte page of physical memory.
+// Allocate one 4096-byte page of physical memory.返回其物理地址
 // Returns a pointer that the kernel can use.
 // Returns 0 if the memory cannot be allocated.
 void *
@@ -71,7 +71,7 @@ kalloc(void)
   struct run *r;
 
   acquire(&kmem.lock);
-  r = kmem.freelist;
+  r = kmem.freelist; // kmem中只有两样东西：锁 and freelist链表
   if(r)
     kmem.freelist = r->next;
   release(&kmem.lock);
