@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "*.ipyb": "python",
+        "riscv.h": "c",
+        "defs.h": "c"
+    }
+}
